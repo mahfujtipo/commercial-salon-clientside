@@ -124,35 +124,25 @@ export default function RegisterPage() {
       return photoURL.trim() || undefined;
     }
 
-    const apiKey = process.env.NEXT_PUBLIC_IMGBB_API_KEY;
-
-    if (!apiKey) {
-      throw new Error("ImgBB API key is missing. Check your environment file.");
-    }
-
     const formData = new FormData();
     formData.append("image", selectedImage);
 
     setIsUploadingImage(true);
 
     try {
-      const response = await fetch(
-        `https://api.imgbb.com/1/upload?key=${apiKey}`,
-        {
-          method: "POST",
-          body: formData,
-        },
-      );
+      // Uploaded through our own server route so the ImgBB key stays private.
+      const response = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
 
       const result = await response.json();
 
       if (!response.ok || !result.success || !result.data?.url) {
-        throw new Error(
-          result.error?.message || "Profile image upload failed.",
-        );
+        throw new Error(result.message || "Profile image upload failed.");
       }
 
-      return result.data.url;
+      return result.data.url as string;
     } finally {
       setIsUploadingImage(false);
     }
@@ -230,7 +220,7 @@ export default function RegisterPage() {
     try {
       await authClient.signIn.social({
         provider: "google",
-        callbackURL: "/",
+        callbackURL: "/auth/callback",
       });
     } catch (error) {
       setIsGoogleLoading(false);
