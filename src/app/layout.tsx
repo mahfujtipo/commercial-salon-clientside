@@ -1,6 +1,4 @@
 import type { Metadata } from "next";
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
 import { Toaster } from "sonner";
 import "./globals.css";
 
@@ -22,12 +20,7 @@ export default function RootLayout({
     <html lang="en">
       <body className="min-h-screen antialiased">
         <Toaster position="top-center" richColors closeButton />
-
-        <Navbar />
-
-        <main>{children}</main>
-
-        <Footer />
+        {children}
       </body>
     </html>
   );
