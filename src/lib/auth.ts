@@ -17,10 +17,23 @@ export const auth = betterAuth({
 
   user: {
     additionalFields: {
+      // Never writable from the client: new accounts are always customers.
+      // Admin access is assigned securely on the server (npm run make-admin).
       role: {
         type: "string",
         required: false,
         defaultValue: "customer",
+        input: false,
+      },
+      isBlocked: {
+        type: "boolean",
+        required: false,
+        defaultValue: false,
+        input: false,
+      },
+      phone: {
+        type: "string",
+        required: false,
         input: false,
       },
     },
