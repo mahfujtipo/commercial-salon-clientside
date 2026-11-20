@@ -10,9 +10,22 @@ export const auth = betterAuth({
   database: mongodbAdapter(db, {
     client,
   }),
+
   emailAndPassword: {
     enabled: true,
   },
+
+  user: {
+    additionalFields: {
+      role: {
+        type: "string",
+        required: false,
+        defaultValue: "customer",
+        input: false,
+      },
+    },
+  },
+
   socialProviders: {
     google: {
       clientId: process.env.GOOGLE_CLIENT_ID as string,
@@ -20,13 +33,16 @@ export const auth = betterAuth({
       requireEmailVerification: true,
     },
   },
+
   account: {
     accountLinking: {
       enabled: true,
       trustedProviders: ["google"],
     },
   },
+
   plugins: [jwt()],
+
   session: {
     cookieCache: {
       enabled: true,

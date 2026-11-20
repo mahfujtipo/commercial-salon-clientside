@@ -57,14 +57,11 @@ export default function LoginPage() {
         },
         {
           onRequest: () => setIsLoading(true),
-          onSuccess: () => {
-            toast.success("Welcome back! Sign in successful.");
 
-            setTimeout(() => {
-              router.push("/");
-              router.refresh();
-            }, 1200);
+          onSuccess: () => {
+            router.push("/auth/callback");
           },
+
           onError: (ctx) => {
             setIsLoading(false);
             toast.error(ctx.error.message || "Unable to sign in.");
@@ -87,7 +84,7 @@ export default function LoginPage() {
     try {
       await authClient.signIn.social({
         provider: "google",
-        callbackURL: "/",
+        callbackURL: "/auth/callback",
       });
     } catch (error) {
       setIsGoogleLoading(false);
