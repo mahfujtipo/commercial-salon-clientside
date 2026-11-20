@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Eye, EyeOff, ArrowRight, Scissors, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { authClient } from "@/lib/auth-client";
+import { callbackUrlWithRedirect, readRedirectFromUrl } from "@/lib/redirect";
 
 function GoogleIcon() {
   return (
@@ -59,7 +60,7 @@ export default function LoginPage() {
           onRequest: () => setIsLoading(true),
 
           onSuccess: () => {
-            router.push("/auth/callback");
+            router.push(callbackUrlWithRedirect(readRedirectFromUrl()));
           },
 
           onError: (ctx) => {
@@ -84,7 +85,7 @@ export default function LoginPage() {
     try {
       await authClient.signIn.social({
         provider: "google",
-        callbackURL: "/auth/callback",
+        callbackURL: callbackUrlWithRedirect(readRedirectFromUrl()),
       });
     } catch (error) {
       setIsGoogleLoading(false);

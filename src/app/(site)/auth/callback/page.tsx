@@ -4,7 +4,12 @@ import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { authClient } from "@/lib/auth-client";
+import { getCurrentUser } from "@/lib/actions";
+import { getErrorMessage } from "@/lib/api";
+import { readRedirectFromUrl } from "@/lib/redirect";
 
+// Runs right after Sign In (email or Google): loads the verified profile from the
+// Express API, blocks blocked users and sends everyone to the right place.
 export default function AuthCallbackPage() {
   const router = useRouter();
   const hasRun = useRef(false);
@@ -15,33 +20,10 @@ export default function AuthCallbackPage() {
 
     const handleAuthRedirect = async () => {
       try {
-        const tokenResult = await authClient.token();
-        const token = tokenResult.data?.token;
-
-        if (!token) {
-          throw new Error("Unable to retrieve authentication token.");
-        }
-
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_SERVER_URL}/api/v1/users/me`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-            cache: "no-store",
-          },
-        );
-
-        const result = await response.json();
-
-        if (!response.ok || !result.success) {
-          throw new Error(result.message || "Unable to fetch user profile.");
-        }
-
-        const user = result.data;
+        const user = await getCurrentUser();
 
         if (user.isBlocked) {
-          toast.error("Your account has been blocked.");
+          toast.error("Your account has been blocked. Please contact the salon.");
           await authClient.signOut();
           router.replace("/login");
           return;
@@ -49,18 +31,19 @@ export default function AuthCallbackPage() {
 
         toast.success("Login successful!");
 
-        if (user.role === "admin") {
-          router.replace("/admin/dashboard");
-        } else {
-          router.replace("/customer/dashboard");
-        }
+        // Admins always land on the dashboard. Customers return to the page
+        // they were trying to open (for example a service details page).
+        const returnTo = user.role === "admin" ? null : readRedirectFromUrl();
+
+        router.replace(returnTo ?? "/dashboard");
       } catch (error) {
         console.error("Authentication redirect error:", error);
 
         toast.error(
-          error instanceof Error
-            ? error.message
-            : "Authentication failed. Please sign in again.",
+          getErrorMessage(
+            error,
+            "Authentication failed. Please sign in again.",
+          ),
         );
 
         router.replace("/login");

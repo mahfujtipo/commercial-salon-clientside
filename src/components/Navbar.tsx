@@ -36,8 +36,8 @@ export default function Navbar() {
   const user = session?.user;
   const userRole = (user as { role?: string } | undefined)?.role ?? "customer";
 
-  const dashboardLink =
-    userRole === "admin" ? "/admin/dashboard" : "/dashboard";
+  // One shared dashboard for both roles (content changes by role)
+  const dashboardLink = "/dashboard";
 
   // Close profile dropdown when clicking outside
   useEffect(() => {
