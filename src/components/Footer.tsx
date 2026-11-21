@@ -1,17 +1,19 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState, type FormEvent } from "react";
+import { useState, useSyncExternalStore, type FormEvent } from "react";
+import { Clock, Mail, MapPin, Phone } from "lucide-react";
 
 export default function Footer() {
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<"idle" | "success" | "error">("idle");
   const [errorMessage, setErrorMessage] = useState("");
-  const [currentYear, setCurrentYear] = useState(2026);
-
-  useEffect(() => {
-    setCurrentYear(new Date().getFullYear());
-  }, []);
+  // Current year without calling setState inside an effect
+  const currentYear = useSyncExternalStore(
+    () => () => {},
+    () => new Date().getFullYear(),
+    () => 2026,
+  );
 
   const handleSubscribe = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -45,11 +47,11 @@ export default function Footer() {
   ];
 
   const services = [
-    "Hair Styling",
-    "Hair Coloring",
-    "Facial Treatments",
-    "Manicure & Pedicure",
-    "Makeup Services",
+    { label: "Hair Styling", category: "Haircut & Styling" },
+    { label: "Hair Coloring", category: "Hair Coloring" },
+    { label: "Facial Treatments", category: "Facial & Skincare" },
+    { label: "Manicure & Pedicure", category: "Manicure & Pedicure" },
+    { label: "Makeup Services", category: "Makeup" },
   ];
 
   const socials = [
@@ -153,12 +155,12 @@ export default function Footer() {
 
             <ul className="flex flex-col gap-3 text-sm">
               {services.map((service) => (
-                <li key={service}>
+                <li key={service.label}>
                   <Link
-                    href="/services"
+                    href={`/services?category=${encodeURIComponent(service.category)}`}
                     className="text-[#B7A69D] transition-colors hover:text-[#E8B6A7]"
                   >
-                    {service}
+                    {service.label}
                   </Link>
                 </li>
               ))}
@@ -209,6 +211,66 @@ export default function Footer() {
                 <p className="text-xs text-red-300">{errorMessage}</p>
               )}
             </form>
+          </div>
+        </div>
+
+        {/* Salon contact, address and opening hours */}
+        <div className="mt-14 grid gap-8 border-t border-white/10 pt-10 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="flex gap-4">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#E8B6A7]/10 text-[#E8B6A7]">
+              <Phone size={18} />
+            </span>
+            <div>
+              <h3 className="text-sm font-semibold uppercase tracking-wider text-white">
+                Contact Us
+              </h3>
+              <ul className="mt-3 space-y-2 text-sm text-[#B7A69D]">
+                <li>
+                  <a href="tel:+8801700000000" className="hover:text-[#E8B6A7]">
+                    +880 1700-000000
+                  </a>
+                </li>
+                <li className="flex items-center gap-2">
+                  <Mail size={14} />
+                  <a href="mailto:hello@salonbook.com" className="hover:text-[#E8B6A7]">
+                    hello@salonbook.com
+                  </a>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <div className="flex gap-4">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#E8B6A7]/10 text-[#E8B6A7]">
+              <MapPin size={18} />
+            </span>
+            <div>
+              <h3 className="text-sm font-semibold uppercase tracking-wider text-white">
+                Salon Address
+              </h3>
+              <address className="mt-3 text-sm not-italic leading-6 text-[#B7A69D]">
+                SalonBook Studio
+                <br />
+                123 Beauty Avenue, Downtown
+                <br />
+                Bangladesh
+              </address>
+            </div>
+          </div>
+
+          <div className="flex gap-4">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#E8B6A7]/10 text-[#E8B6A7]">
+              <Clock size={18} />
+            </span>
+            <div>
+              <h3 className="text-sm font-semibold uppercase tracking-wider text-white">
+                Opening Hours
+              </h3>
+              <ul className="mt-3 space-y-1.5 text-sm text-[#B7A69D]">
+                <li>Mon – Sat: 9:00 AM – 6:00 PM</li>
+                <li>Sunday: Closed</li>
+              </ul>
+            </div>
           </div>
         </div>
 
