@@ -1,29 +1,40 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { authClient } from "@/lib/auth-client";
 import { getCurrentUser } from "@/lib/actions";
 import { getErrorMessage } from "@/lib/api";
 import { readRedirectFromUrl } from "@/lib/redirect";
+import { clearTokenCache } from "@/lib/clientsidejwt";
 
 // Runs right after Sign In (email or Google): loads the verified profile from the
 // Express API, blocks blocked users and sends everyone to the right place.
 export default function AuthCallbackPage() {
   const router = useRouter();
-  const hasRun = useRef(false);
 
   useEffect(() => {
-    if (hasRun.current) return;
-    hasRun.current = true;
+    let active = true;
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(() => {
+      controller.abort(
+        new Error("Account verification timed out. Please try signing in again."),
+      );
+    }, 20_000);
+
+    clearTokenCache();
 
     const handleAuthRedirect = async () => {
       try {
-        const user = await getCurrentUser();
+        const user = await getCurrentUser({ signal: controller.signal });
+        if (!active) return;
 
         if (user.isBlocked) {
-          toast.error("Your account has been blocked. Please contact the salon.");
+          toast.error(
+            "Your account has been blocked. Please contact the salon.",
+          );
+          clearTokenCache();
           await authClient.signOut();
           router.replace("/login");
           return;
@@ -37,6 +48,7 @@ export default function AuthCallbackPage() {
 
         router.replace(returnTo ?? "/dashboard");
       } catch (error) {
+        if (!active) return;
         console.error("Authentication redirect error:", error);
 
         toast.error(
@@ -51,6 +63,12 @@ export default function AuthCallbackPage() {
     };
 
     handleAuthRedirect();
+
+    return () => {
+      active = false;
+      window.clearTimeout(timeoutId);
+      controller.abort();
+    };
   }, [router]);
 
   return (

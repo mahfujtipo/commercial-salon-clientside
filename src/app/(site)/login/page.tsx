@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff, ArrowRight, Scissors, CheckCircle2 } from "lucide-react";
@@ -33,7 +33,10 @@ function GoogleIcon() {
 
 export default function LoginPage() {
   const router = useRouter();
-
+  const { data: session, isPending } = authClient.useSession();
+  const authInProgress = useRef(false);
+  const redirectStarted = useRef(false);
+  const hadAuthenticatedSession = useRef(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -41,45 +44,89 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
+  useEffect(() => {
+    if (isPending) return;
+
+    if (!session?.user) {
+      if (hadAuthenticatedSession.current) {
+        hadAuthenticatedSession.current = false;
+        authInProgress.current = false;
+        redirectStarted.current = false;
+        setIsLoading(false);
+        setIsGoogleLoading(false);
+        setEmail("");
+        setPassword("");
+      }
+      return;
+    }
+
+    hadAuthenticatedSession.current = true;
+    if (authInProgress.current || redirectStarted.current) return;
+
+    redirectStarted.current = true;
+    router.replace(callbackUrlWithRedirect(readRedirectFromUrl()));
+  }, [isPending, router, session]);
+
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
+    if (authInProgress.current || redirectStarted.current) return;
 
     if (!email.trim() || !password) {
       toast.error("Please enter your email and password.");
       return;
     }
 
+    authInProgress.current = true;
+    setIsLoading(true);
+
     try {
-      await authClient.signIn.email(
-        {
-          email: email.trim(),
-          password,
-          rememberMe,
-        },
-        {
-          onRequest: () => setIsLoading(true),
+      const { error } = await authClient.signIn.email({
+        email: email.trim(),
+        password,
+        rememberMe,
+      });
 
-          onSuccess: () => {
-            router.push(callbackUrlWithRedirect(readRedirectFromUrl()));
-          },
+      if (error) {
+        toast.error(error.message || "Unable to sign in.");
+        return;
+      }
 
-          onError: (ctx) => {
-            setIsLoading(false);
-            toast.error(ctx.error.message || "Unable to sign in.");
-          },
-        },
-      );
+      const { data: currentSession, error: sessionError } =
+        await authClient.getSession();
+
+      if (sessionError || !currentSession?.user) {
+        toast.error(
+          sessionError?.message ||
+            "Sign in succeeded, but your session could not be confirmed.",
+        );
+        return;
+      }
+
+      setEmail("");
+      setPassword("");
+      hadAuthenticatedSession.current = true;
+
+      if (!redirectStarted.current) {
+        redirectStarted.current = true;
+        router.replace(callbackUrlWithRedirect(readRedirectFromUrl()));
+      }
     } catch (error) {
-      setIsLoading(false);
       toast.error(
         error instanceof Error
           ? error.message
           : "Something went wrong. Please try again.",
       );
+    } finally {
+      authInProgress.current = false;
+      setIsLoading(false);
     }
   };
 
   const handleGoogleSignIn = async () => {
+    if (authInProgress.current) return;
+
+    authInProgress.current = true;
     setIsGoogleLoading(true);
 
     try {
@@ -88,6 +135,7 @@ export default function LoginPage() {
         callbackURL: callbackUrlWithRedirect(readRedirectFromUrl()),
       });
     } catch (error) {
+      authInProgress.current = false;
       setIsGoogleLoading(false);
       toast.error(
         error instanceof Error

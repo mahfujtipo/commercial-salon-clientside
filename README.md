@@ -1,86 +1,65 @@
-# SalonBook – Client
+# SalonBook Client
 
-SalonBook is a salon appointment booking platform. Customers browse salon services, request
-appointments and pay for confirmed ones with Stripe. The salon administrator manages services,
-appointments, customers and payments from a role-based dashboard.
+SalonBook is a salon appointment booking platform. Customers browse services, request appointments, and pay for confirmed appointments through Stripe Checkout. Administrators manage services, appointments, customers, and transactions.
 
-- **Live website:** _add link_
-- **Client repository:** _add link_
-- **Server repository:** _add link_
+## Features
 
-## Important Features
+- Home page and service catalog with search, category filtering, price sorting, and pagination.
+- Better Auth email/password and Google authentication, role-aware redirects, and blocked-account handling.
+- Customer and admin dashboards for bookings, services, users, profiles, and payment history.
+- Stripe Checkout; payment status changes only after a verified server webhook.
+- ImgBB image uploads through server-side routes, plus loading, error, empty, toast, and responsive UI states.
 
-- Public home page with featured services, categories, how-it-works and testimonials (all dynamic data comes from the API)
-- Browse Services: search by name, category filter, price sorting and pagination
-- Protected service details page with an appointment form and live time-slot availability
-- Better Auth: email/password and Google sign in, blocked-user protection, return-to-page after login
-- **One shared dashboard** (`/dashboard`) with role-based sidebar and content
-  - Customer: overview, My Appointments (cancel pending, Pay Now for confirmed), profile
-  - Admin: overview, Manage Services (image upload), Manage Appointments, Manage Users (block/unblock), Transactions, profile
-- Stripe Checkout; payment status changes only after a verified Stripe webhook on the server
-- Toast notifications (Sonner), confirmation dialogs, loading / empty / error states, responsive layout
+## Technology
 
-## Technology Stack
+Next.js App Router, React, TypeScript, Tailwind CSS, Better Auth, MongoDB, Sonner, and Lucide React. The REST API lives in the separate Express server repository.
 
-Next.js (App Router, Cache Components), React, TypeScript, Tailwind CSS, Better Auth, Sonner, Lucide React.
-The API lives in the separate Express/MongoDB server repository.
+## Local setup
 
-## Installation
-
-```bash
-git clone <client-repository-link>
-cd salonbook-client
+~~~powershell
 npm install
-cp .env.example .env     # then fill in the values
-```
+Copy-Item .env.example .env
+npm run dev
+~~~
 
-## How to Run the Project Locally
+Run the Express server separately using its README. The client defaults to http://localhost:3000 and the local server to http://localhost:8000.
 
-1. Start the Express server (see the server README) on `http://localhost:8000`.
-2. Start the client:
+## Environment variables
 
-```bash
-npm run dev      # http://localhost:3000
-npm run build    # production build
-npm start        # run the production build
-```
-
-## Required Environment Variables (names only)
-
-| Name | Purpose |
+| Variable | Purpose |
 |---|---|
-| `BETTER_AUTH_SECRET` | Better Auth signing secret |
-| `BETTER_AUTH_URL` | Public URL of this client |
-| `NEXT_PUBLIC_BETTER_AUTH_URL` | Same URL, used by the browser auth client |
-| `MONGODB_URI` | MongoDB connection string (same database as the server) |
-| `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | Google OAuth credentials |
-| `NEXT_PUBLIC_SERVER_URL` | Base URL of the Express API |
-| `IMGBB_API_KEY` | ImgBB key, **private**, used only by the `/api/upload` server route |
+| BETTER_AUTH_SECRET | Better Auth signing secret |
+| BETTER_AUTH_URL | Better Auth server URL |
+| NEXT_PUBLIC_BETTER_AUTH_URL | Browser auth URL |
+| MONGODB_URI | MongoDB connection string |
+| DB_NAME | Shared database name; set to SalonBook |
+| GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET | Google OAuth credentials |
+| NEXT_PUBLIC_SERVER_URL | Express API base URL |
+| IMGBB_API_KEY | Private key used only by the server-side upload route |
 
-Never commit `.env`.
+Copy .env.example to .env and fill in local credentials. Never commit .env.
 
-## Project Structure
+## Authentication and payments
 
-```
-src/
-├── app/
-│   ├── (site)/        public pages with Navbar/Footer (home, services, login, register, payment)
-│   ├── dashboard/     shared role-based dashboard
-│   └── api/           Better Auth handler and sign-up image upload
-├── components/        site, home, services, dashboard and ui components
-├── hooks/             useAsyncData, useDebouncedValue
-├── lib/               api.ts (requests), actions.ts (API calls), auth and JWT helpers
-└── types/             shared TypeScript types
-```
+Better Auth stores users, sessions, and provider accounts in the SalonBook database. The client sends Better Auth JWTs to the Express API; the API verifies tokens against Better Auth JWKS and loads roles and blocked status from MongoDB. Stripe sessions are created by the server. Only a verified Stripe webhook can mark an appointment paid.
 
-## Authentication and Roles
+## Links
 
-Better Auth issues a JWT (`clientsidejwt`) that is sent to the Express API. The role and blocked
-status are always read from the server (`GET /api/v1/users/me`), and every protected API route
-re-checks them. Hiding links in the UI is only a convenience.
+- Live website: Not configured in this repository.
+- Client repository: No client Git remote is configured.
+- Server repository: https://github.com/mahfujtipo/commercial-salon-server
 
-## Deployment
+## Project structure
 
-Deploy to Vercel. Add all environment variables, set `BETTER_AUTH_URL` / `NEXT_PUBLIC_BETTER_AUTH_URL`
-to the live client URL and `NEXT_PUBLIC_SERVER_URL` to the live API URL, and add the live URL to the
-Google OAuth redirect URIs.
+- src/app/(site): public pages, including home, service browsing, authentication, callback, and payment routes.
+- src/app/dashboard: shared role-aware customer/admin dashboard.
+- src/app/api: Better Auth handler and image upload route.
+- src/components: Navbar, home, service, dashboard, and shared UI components.
+- src/lib: API client, actions, auth configuration, and JWT helpers.
+
+## Production commands
+
+~~~powershell
+npm run build
+npm start
+~~~

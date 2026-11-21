@@ -1,10 +1,11 @@
 import { betterAuth } from "better-auth";
+import { APIError, createAuthMiddleware } from "better-auth/api";
 import { MongoClient } from "mongodb";
 import { mongodbAdapter } from "@better-auth/mongo-adapter";
 import { jwt } from "better-auth/plugins";
 
 const client = new MongoClient(process.env.MONGODB_URI as string);
-const db = client.db("SalonBook");
+const db = client.db(process.env.DB_NAME || "SalonBook");
 
 export const auth = betterAuth({
   database: mongodbAdapter(db, {
@@ -13,6 +14,26 @@ export const auth = betterAuth({
 
   emailAndPassword: {
     enabled: true,
+    minPasswordLength: 6,
+  },
+
+  // Enforce password composition at the auth API, not only in the registration form.
+  hooks: {
+    before: createAuthMiddleware(async (ctx) => {
+      if (ctx.path !== "/sign-up/email") return;
+
+      const password = ctx.body.password;
+      if (
+        typeof password !== "string" ||
+        password.length < 6 ||
+        !/[A-Z]/.test(password) ||
+        !/[a-z]/.test(password)
+      ) {
+        throw APIError.fromStatus("BAD_REQUEST", {
+          message: "Password must be at least 6 characters and include uppercase and lowercase letters.",
+        });
+      }
+    }),
   },
 
   user: {

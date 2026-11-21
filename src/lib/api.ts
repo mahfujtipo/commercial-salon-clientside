@@ -30,6 +30,7 @@ interface RequestOptions {
   query?: Record<string, QueryValue>;
   /** Attach the Better Auth JWT. Defaults to true. Use false for public endpoints. */
   auth?: boolean;
+  signal?: AbortSignal;
 }
 
 export interface ApiResult<T> {
@@ -58,12 +59,12 @@ function buildUrl(path: string, query?: Record<string, QueryValue>) {
  */
 export async function apiRequest<T>(
   path: string,
-  { method = "GET", body, query, auth = true }: RequestOptions = {},
+  { method = "GET", body, query, auth = true, signal }: RequestOptions = {},
 ): Promise<ApiResult<T>> {
   const headers: Record<string, string> = {};
 
   if (auth) {
-    const token = await clientsidejwt();
+    const token = await clientsidejwt(signal);
 
     if (!token) {
       throw new ApiError(401, "Please sign in to continue.");
@@ -85,6 +86,7 @@ export async function apiRequest<T>(
       method,
       headers,
       cache: "no-store",
+      signal,
       body:
         body === undefined
           ? undefined
@@ -93,6 +95,11 @@ export async function apiRequest<T>(
             : JSON.stringify(body),
     });
   } catch {
+    if (signal?.aborted) {
+      throw signal.reason instanceof Error
+        ? signal.reason
+        : new ApiError(408, "The request was cancelled.");
+    }
     throw new ApiError(
       0,
       "Unable to reach the server. Please check your connection and try again.",
@@ -110,6 +117,11 @@ export async function apiRequest<T>(
   try {
     json = await response.json();
   } catch {
+    if (signal?.aborted) {
+      throw signal.reason instanceof Error
+        ? signal.reason
+        : new ApiError(408, "The request was cancelled.");
+    }
     json = null;
   }
 

@@ -34,8 +34,8 @@ async function paged<T>(path: string, query: Record<string, string | number | un
 
 /* ------------------------------- Users -------------------------------- */
 
-export const getCurrentUser = async () =>
-  (await apiRequest<CurrentUser>("/users/me")).data;
+export const getCurrentUser = async (options?: { signal?: AbortSignal }) =>
+  (await apiRequest<CurrentUser>("/users/me", { signal: options?.signal })).data;
 
 export const updateProfile = async (payload: {
   name?: string;

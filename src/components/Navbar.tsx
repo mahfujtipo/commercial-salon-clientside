@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   Menu,
   X,
@@ -14,6 +14,7 @@ import {
   LayoutDashboard,
 } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
+import { clearTokenCache } from "@/lib/clientsidejwt";
 import { toast } from "sonner";
 
 const navLinks = [
@@ -22,8 +23,15 @@ const navLinks = [
   { name: "About Us", href: "/about" },
 ];
 
-export default function Navbar() {
+function isActivePath(pathname: string, href: string) {
+  return href === "/"
+    ? pathname === "/"
+    : pathname === href || pathname.startsWith(`${href}/`);
+}
+
+function NavbarContent() {
   const router = useRouter();
+  const pathname = usePathname() ?? "/";
 
   const [menuOpen, setMenuOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
@@ -76,7 +84,7 @@ export default function Navbar() {
   const handleLogout = async () => {
     try {
       setIsLoggingOut(true);
-
+      clearTokenCache();
       await authClient.signOut();
 
       setProfileOpen(false);
@@ -121,15 +129,22 @@ export default function Navbar() {
 
         {/* Desktop Navigation */}
         <div className="hidden items-center gap-9 md:flex">
-          {navLinks.map((link) => (
-            <Link
-              key={link.name}
-              href={link.href}
-              className="text-sm font-medium text-[#68534C] transition-colors hover:text-[#B77970]"
-            >
-              {link.name}
-            </Link>
-          ))}
+          {navLinks.map((link) => {
+            const active = isActivePath(pathname, link.href);
+
+            return (
+              <Link
+                key={link.name}
+                href={link.href}
+                aria-current={active ? "page" : undefined}
+                className={`text-sm font-medium transition-colors hover:text-[#B77970] ${
+                  active ? "text-[#A66C62]" : "text-[#68534C]"
+                }`}
+              >
+                {link.name}
+              </Link>
+            );
+          })}
         </div>
 
         {/* Desktop Actions */}
@@ -217,7 +232,12 @@ export default function Navbar() {
                     <Link
                       href={dashboardLink}
                       onClick={() => setProfileOpen(false)}
-                      className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium text-[#49342D] transition-colors hover:bg-[#F3EAE3]"
+                      aria-current={isActivePath(pathname, dashboardLink) ? "page" : undefined}
+                      className={`flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition-colors hover:bg-[#F3EAE3] ${
+                        isActivePath(pathname, dashboardLink)
+                          ? "bg-[#F3EAE3] text-[#A66C62]"
+                          : "text-[#49342D]"
+                      }`}
                     >
                       <LayoutDashboard size={18} className="text-[#A66C62]" />
                       <span>
@@ -281,16 +301,23 @@ export default function Navbar() {
       {menuOpen && (
         <div className="border-t border-[#EDE5DC] bg-[#FFFCF8] px-5 py-6 shadow-lg md:hidden">
           <div className="flex flex-col gap-5">
-            {navLinks.map((link) => (
-              <Link
-                key={link.name}
-                href={link.href}
-                onClick={() => setMenuOpen(false)}
-                className="text-sm font-semibold text-[#513029] transition-colors hover:text-[#B77970]"
-              >
-                {link.name}
-              </Link>
-            ))}
+            {navLinks.map((link) => {
+              const active = isActivePath(pathname, link.href);
+
+              return (
+                <Link
+                  key={link.name}
+                  href={link.href}
+                  onClick={() => setMenuOpen(false)}
+                  aria-current={active ? "page" : undefined}
+                  className={`text-sm font-semibold transition-colors hover:text-[#B77970] ${
+                    active ? "text-[#A66C62]" : "text-[#513029]"
+                  }`}
+                >
+                  {link.name}
+                </Link>
+              );
+            })}
 
             <div className="flex flex-col gap-3 border-t border-[#EDE5DC] pt-5">
               {isPending ? (
@@ -326,7 +353,12 @@ export default function Navbar() {
                   <Link
                     href={dashboardLink}
                     onClick={() => setMenuOpen(false)}
-                    className="flex items-center justify-center gap-2 rounded-full bg-[#6F4038] py-3 text-sm font-semibold text-white transition-colors hover:bg-[#513029]"
+                    aria-current={isActivePath(pathname, dashboardLink) ? "page" : undefined}
+                    className={`flex items-center justify-center gap-2 rounded-full bg-[#6F4038] py-3 text-sm font-semibold text-white transition-colors hover:bg-[#513029] ${
+                      isActivePath(pathname, dashboardLink)
+                        ? "ring-2 ring-[#E8B6A7] ring-offset-2 ring-offset-[#FFFCF8]"
+                        : ""
+                    }`}
                   >
                     <LayoutDashboard size={17} />
                     {userRole === "admin" ? "Admin Dashboard" : "My Dashboard"}
@@ -366,5 +398,52 @@ export default function Navbar() {
         </div>
       )}
     </header>
+  );
+}
+
+function NavbarFallback() {
+  return (
+    <header
+      aria-hidden="true"
+      className="sticky top-0 z-50 border-b border-[#EDE5DC] bg-[#FFFCF8]/95 backdrop-blur-xl"
+    >
+      <nav className="mx-auto flex h-[78px] max-w-7xl items-center justify-between px-5 sm:px-8 lg:px-12">
+        <div className="flex items-center gap-2.5">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#6F4038] text-white">
+            <Scissors size={21} strokeWidth={1.8} />
+          </div>
+          <div>
+            <h1 className="text-xl font-bold tracking-tight text-[#39251F]">
+              Salon<span className="text-[#B77970]">Book.</span>
+            </h1>
+            <p className="text-[9px] font-medium uppercase tracking-[2.5px] text-[#9A8178]">
+              Beauty. Booked.
+            </p>
+          </div>
+        </div>
+
+        <div className="hidden items-center gap-9 md:flex">
+          <span className="h-4 w-10 animate-pulse rounded bg-[#F3EAE3]" />
+          <span className="h-4 w-24 animate-pulse rounded bg-[#F3EAE3]" />
+          <span className="h-4 w-16 animate-pulse rounded bg-[#F3EAE3]" />
+        </div>
+
+        <div className="hidden items-center gap-5 md:flex">
+          <div className="h-10 w-32 animate-pulse rounded-full bg-[#F3EAE3]" />
+        </div>
+
+        <div className="flex h-10 w-10 items-center justify-center rounded-lg md:hidden">
+          <span className="h-5 w-5 animate-pulse rounded bg-[#F3EAE3]" />
+        </div>
+      </nav>
+    </header>
+  );
+}
+
+export default function Navbar() {
+  return (
+    <Suspense fallback={<NavbarFallback />}>
+      <NavbarContent />
+    </Suspense>
   );
 }

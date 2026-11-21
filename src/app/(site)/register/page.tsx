@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { authClient } from "@/lib/auth-client";
+import { clearTokenCache } from "@/lib/clientsidejwt";
 
 function GoogleIcon() {
   return (
@@ -179,6 +180,7 @@ export default function RegisterPage() {
 
           onSuccess: async () => {
             try {
+              clearTokenCache();
               await authClient.signOut();
             } catch {
               // Registration may succeed without an active session.

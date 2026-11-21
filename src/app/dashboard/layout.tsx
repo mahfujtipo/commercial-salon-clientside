@@ -8,14 +8,17 @@ export const metadata: Metadata = {
   title: "Dashboard",
 };
 
-// Shared dashboard layout for Admin and Customer.
-// It sits outside the (site) route group, so there is no public Navbar/Footer here.
+// Opt out of instant navigation validation for this dashboard segment.
+export const instant = false;
+
 export default function DashboardLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <Suspense
-      fallback={<LoadingState label="Loading dashboard..." className="min-h-screen" />}
+      fallback={
+        <LoadingState label="Loading dashboard..." className="min-h-screen" />
+      }
     >
       <DashboardProvider>
         <DashboardShell>{children}</DashboardShell>

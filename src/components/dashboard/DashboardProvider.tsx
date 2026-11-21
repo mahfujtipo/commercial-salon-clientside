@@ -11,6 +11,7 @@ import { useRouter } from "next/navigation";
 import { ShieldAlert } from "lucide-react";
 import { toast } from "sonner";
 import { authClient } from "@/lib/auth-client";
+import { clearTokenCache } from "@/lib/clientsidejwt";
 import { getCurrentUser } from "@/lib/actions";
 import { loginUrlWithRedirect } from "@/lib/redirect";
 import { useAsyncData } from "@/hooks/useAsyncData";
@@ -41,10 +42,13 @@ export function useDashboardUser() {
  */
 function ProfileGate({ children }: { children: ReactNode }) {
   const router = useRouter();
-  const { data: user, error, errorStatus, loading, reload } = useAsyncData(
-    getCurrentUser,
-    "dashboard-user",
-  );
+  const {
+    data: user,
+    error,
+    errorStatus,
+    loading,
+    reload,
+  } = useAsyncData(getCurrentUser, "dashboard-user");
 
   const isBlocked = user?.isBlocked === true;
   const isUnauthorized = errorStatus === 401;
@@ -53,15 +57,17 @@ function ProfileGate({ children }: { children: ReactNode }) {
     if (!isBlocked) return;
 
     toast.error("Your account has been blocked. Please contact the salon.");
+    clearTokenCache();
     authClient.signOut().finally(() => router.replace("/login"));
   }, [isBlocked, router]);
 
   useEffect(() => {
     if (!isUnauthorized) return;
 
-    authClient.signOut().finally(() =>
-      router.replace(loginUrlWithRedirect("/dashboard")),
-    );
+    clearTokenCache();
+    authClient
+      .signOut()
+      .finally(() => router.replace(loginUrlWithRedirect("/dashboard")));
   }, [isUnauthorized, router]);
 
   if (isBlocked) {
@@ -113,7 +119,11 @@ function ProfileProvider({
   );
 }
 
-export default function DashboardProvider({ children }: { children: ReactNode }) {
+export default function DashboardProvider({
+  children,
+}: {
+  children: ReactNode;
+}) {
   const router = useRouter();
   const { data: session, isPending } = authClient.useSession();
   const isSignedIn = Boolean(session?.user);

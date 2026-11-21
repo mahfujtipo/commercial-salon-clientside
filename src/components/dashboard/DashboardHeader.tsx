@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { authClient } from "@/lib/auth-client";
+import { clearTokenCache } from "@/lib/clientsidejwt";
 import { useDashboardUser } from "./DashboardProvider";
 import { getPageTitle } from "./menu";
 
@@ -53,7 +54,9 @@ export default function DashboardHeader({ onToggleSidebar }: HeaderProps) {
     setLoggingOut(true);
 
     try {
+      clearTokenCache();
       await authClient.signOut();
+
       toast.success("Logged out successfully!");
       router.push("/");
       router.refresh();
@@ -129,7 +132,9 @@ export default function DashboardHeader({ onToggleSidebar }: HeaderProps) {
             className="absolute right-0 top-[calc(100%+10px)] z-50 w-60 overflow-hidden rounded-2xl border border-[#EDE4DC] bg-white shadow-[0_15px_45px_rgba(73,52,45,0.13)]"
           >
             <div className="border-b border-[#EDE4DC] bg-[#F8F2ED] px-4 py-3">
-              <p className="truncate text-sm font-bold text-[#49342D]">{user.name}</p>
+              <p className="truncate text-sm font-bold text-[#49342D]">
+                {user.name}
+              </p>
               <p className="truncate text-xs text-[#82736C]">{user.email}</p>
             </div>
 
@@ -148,7 +153,8 @@ export default function DashboardHeader({ onToggleSidebar }: HeaderProps) {
                 onClick={() => setOpen(false)}
                 className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-[#49342D] hover:bg-[#F8F2ED]"
               >
-                <LayoutDashboard size={17} className="text-[#A66C62]" /> Dashboard
+                <LayoutDashboard size={17} className="text-[#A66C62]" />{" "}
+                Dashboard
               </Link>
               <Link
                 href="/"
