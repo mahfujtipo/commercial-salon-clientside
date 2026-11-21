@@ -50,7 +50,7 @@ export default function HeroSection() {
               href="/services"
               className="group inline-flex items-center justify-center gap-4 rounded-full bg-[#B77970] px-8 py-4 text-sm font-semibold text-white shadow-lg shadow-black/20 transition-all duration-300 hover:-translate-y-1 hover:bg-[#A66C62] hover:shadow-xl"
             >
-              Explore Services
+              Explore Salon Services
               <svg
                 viewBox="0 0 24 24"
                 className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1"
