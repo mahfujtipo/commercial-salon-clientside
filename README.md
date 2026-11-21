@@ -1,36 +1,86 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# SalonBook – Client
 
-## Getting Started
+SalonBook is a salon appointment booking platform. Customers browse salon services, request
+appointments and pay for confirmed ones with Stripe. The salon administrator manages services,
+appointments, customers and payments from a role-based dashboard.
 
-First, run the development server:
+- **Live website:** _add link_
+- **Client repository:** _add link_
+- **Server repository:** _add link_
+
+## Important Features
+
+- Public home page with featured services, categories, how-it-works and testimonials (all dynamic data comes from the API)
+- Browse Services: search by name, category filter, price sorting and pagination
+- Protected service details page with an appointment form and live time-slot availability
+- Better Auth: email/password and Google sign in, blocked-user protection, return-to-page after login
+- **One shared dashboard** (`/dashboard`) with role-based sidebar and content
+  - Customer: overview, My Appointments (cancel pending, Pay Now for confirmed), profile
+  - Admin: overview, Manage Services (image upload), Manage Appointments, Manage Users (block/unblock), Transactions, profile
+- Stripe Checkout; payment status changes only after a verified Stripe webhook on the server
+- Toast notifications (Sonner), confirmation dialogs, loading / empty / error states, responsive layout
+
+## Technology Stack
+
+Next.js (App Router, Cache Components), React, TypeScript, Tailwind CSS, Better Auth, Sonner, Lucide React.
+The API lives in the separate Express/MongoDB server repository.
+
+## Installation
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone <client-repository-link>
+cd salonbook-client
+npm install
+cp .env.example .env     # then fill in the values
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## How to Run the Project Locally
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+1. Start the Express server (see the server README) on `http://localhost:8000`.
+2. Start the client:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run dev      # http://localhost:3000
+npm run build    # production build
+npm start        # run the production build
+```
 
-## Learn More
+## Required Environment Variables (names only)
 
-To learn more about Next.js, take a look at the following resources:
+| Name | Purpose |
+|---|---|
+| `BETTER_AUTH_SECRET` | Better Auth signing secret |
+| `BETTER_AUTH_URL` | Public URL of this client |
+| `NEXT_PUBLIC_BETTER_AUTH_URL` | Same URL, used by the browser auth client |
+| `MONGODB_URI` | MongoDB connection string (same database as the server) |
+| `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | Google OAuth credentials |
+| `NEXT_PUBLIC_SERVER_URL` | Base URL of the Express API |
+| `IMGBB_API_KEY` | ImgBB key, **private**, used only by the `/api/upload` server route |
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Never commit `.env`.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Project Structure
 
-## Deploy on Vercel
+```
+src/
+├── app/
+│   ├── (site)/        public pages with Navbar/Footer (home, services, login, register, payment)
+│   ├── dashboard/     shared role-based dashboard
+│   └── api/           Better Auth handler and sign-up image upload
+├── components/        site, home, services, dashboard and ui components
+├── hooks/             useAsyncData, useDebouncedValue
+├── lib/               api.ts (requests), actions.ts (API calls), auth and JWT helpers
+└── types/             shared TypeScript types
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Authentication and Roles
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Better Auth issues a JWT (`clientsidejwt`) that is sent to the Express API. The role and blocked
+status are always read from the server (`GET /api/v1/users/me`), and every protected API route
+re-checks them. Hiding links in the UI is only a convenience.
+
+## Deployment
+
+Deploy to Vercel. Add all environment variables, set `BETTER_AUTH_URL` / `NEXT_PUBLIC_BETTER_AUTH_URL`
+to the live client URL and `NEXT_PUBLIC_SERVER_URL` to the live API URL, and add the live URL to the
+Google OAuth redirect URIs.
