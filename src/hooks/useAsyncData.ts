@@ -1,12 +1,13 @@
 "use client";
 
 import { useEffect, useEffectEvent, useState } from "react";
-import { getErrorMessage } from "@/lib/api";
+import { ApiError, getErrorMessage } from "@/lib/api";
 
 interface Result<T> {
   key: string;
   data?: T;
   error?: string;
+  errorStatus?: number;
 }
 
 /**
@@ -31,7 +32,11 @@ export function useAsyncData<T>(fetcher: () => Promise<T>, key: string) {
       })
       .catch((error) => {
         if (!cancelled) {
-          setResult({ key: requestKey, error: getErrorMessage(error) });
+          setResult({
+            key: requestKey,
+            error: getErrorMessage(error),
+            errorStatus: error instanceof ApiError ? error.status : undefined,
+          });
         }
       });
 
@@ -45,6 +50,7 @@ export function useAsyncData<T>(fetcher: () => Promise<T>, key: string) {
   return {
     data: result?.data,
     error: isCurrent ? result?.error : undefined,
+    errorStatus: isCurrent ? result?.errorStatus : undefined,
     loading: !isCurrent,
     reload: () => setVersion((v) => v + 1),
   };
