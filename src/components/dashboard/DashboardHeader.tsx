@@ -60,6 +60,7 @@ export default function DashboardHeader({ onToggleSidebar }: HeaderProps) {
       router.refresh();
     } catch {
       toast.error("Logout failed. Please try again.");
+    } finally {
       setLoggingOut(false);
     }
   };
