@@ -1,10 +1,13 @@
 import { NextResponse } from "next/server";
+import sharp from "sharp";
 
 // Server-side ImgBB upload used by the public Sign Up page.
 // The ImgBB API key stays in a private (non NEXT_PUBLIC) environment variable
 // and is never sent to the browser.
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
+const MAX_IMAGE_PIXELS = 20_000_000;
+const MAX_IMAGE_PAGES = 100;
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
 
 function detectImageType(buffer: Buffer): string | null {
@@ -13,6 +16,50 @@ function detectImageType(buffer: Buffer): string | null {
   if (buffer.length >= 6 && ["GIF87a", "GIF89a"].includes(buffer.toString("ascii", 0, 6))) return "image/gif";
   if (buffer.length >= 12 && buffer.toString("ascii", 0, 4) === "RIFF" && buffer.toString("ascii", 8, 12) === "WEBP") return "image/webp";
   return null;
+}
+
+async function isFullyDecodedImage(buffer: Buffer, expectedType: string): Promise<boolean> {
+  const detectedType = detectImageType(buffer);
+  if (!detectedType || detectedType !== expectedType) return false;
+
+  const decoderOptions = {
+    animated: true,
+    failOn: "warning" as const,
+    limitInputPixels: MAX_IMAGE_PIXELS,
+  };
+
+  try {
+    const metadata = await sharp(buffer, decoderOptions).metadata();
+    const formatTypes: Record<string, string> = {
+      jpeg: "image/jpeg",
+      png: "image/png",
+      gif: "image/gif",
+      webp: "image/webp",
+    };
+    const width = metadata.width ?? 0;
+    const frameHeight = metadata.pageHeight ?? metadata.height ?? 0;
+    const pages = metadata.pages ?? 1;
+
+    if (
+      formatTypes[metadata.format ?? ""] !== detectedType ||
+      !Number.isSafeInteger(width) ||
+      !Number.isSafeInteger(frameHeight) ||
+      !Number.isSafeInteger(pages) ||
+      width <= 0 ||
+      frameHeight <= 0 ||
+      pages <= 0 ||
+      pages > MAX_IMAGE_PAGES ||
+      width * frameHeight * pages > MAX_IMAGE_PIXELS
+    ) {
+      return false;
+    }
+
+    // Decode every frame to raw pixels; metadata parsing alone does not validate the image data.
+    await sharp(buffer, decoderOptions).raw().toBuffer();
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 const fail = (message: string, status: number) =>
@@ -47,9 +94,18 @@ export async function POST(request: Request) {
     return fail("Image must be 5 MB or smaller.", 400);
   }
 
-  const imageBuffer = Buffer.from(await file.arrayBuffer());
-  if (detectImageType(imageBuffer) !== file.type) {
-    return fail("File contents must match a valid JPG, PNG, WEBP or GIF image.", 400);
+  let imageBuffer: Buffer;
+  try {
+    imageBuffer = Buffer.from(await file.arrayBuffer());
+  } catch {
+    return fail("Invalid image file.", 400);
+  }
+
+  if (!(await isFullyDecodedImage(imageBuffer, file.type))) {
+    return fail(
+      "Image must be a valid, supported JPG, PNG, WEBP or GIF within the allowed dimensions.",
+      400,
+    );
   }
 
   try {
