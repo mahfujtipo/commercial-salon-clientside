@@ -12,7 +12,7 @@ import {
   UserRound,
 } from "lucide-react";
 import { toast } from "sonner";
-import { authClient } from "@/lib/auth-client";
+import { authClient, refreshAuthSession } from "@/lib/auth-client";
 import { clearTokenCache } from "@/lib/clientsidejwt";
 import { useDashboardUser } from "./DashboardProvider";
 import { getPageTitle } from "./menu";
@@ -55,7 +55,14 @@ export default function DashboardHeader({ onToggleSidebar }: HeaderProps) {
 
     try {
       clearTokenCache();
-      await authClient.signOut();
+      const { error } = await authClient.signOut();
+      if (error) throw new Error(error.message || "Logout failed.");
+
+      clearTokenCache();
+      const refreshedSession = await refreshAuthSession();
+      if (refreshedSession.error || refreshedSession.data) {
+        throw new Error("Unable to confirm the signed-out session.");
+      }
 
       toast.success("Logged out successfully!");
       router.push("/");

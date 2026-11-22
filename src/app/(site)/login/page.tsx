@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff, ArrowRight, Scissors, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
-import { authClient } from "@/lib/auth-client";
+import { authClient, refreshAuthSession } from "@/lib/auth-client";
 import { callbackUrlWithRedirect, readRedirectFromUrl } from "@/lib/redirect";
 
 function GoogleIcon() {
@@ -93,7 +93,7 @@ export default function LoginPage() {
       }
 
       const { data: currentSession, error: sessionError } =
-        await authClient.getSession();
+        await refreshAuthSession();
 
       if (sessionError || !currentSession?.user) {
         toast.error(
