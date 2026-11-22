@@ -11,7 +11,7 @@ import { useRouter } from "next/navigation";
 import { ShieldAlert } from "lucide-react";
 import { toast } from "sonner";
 import { authClient } from "@/lib/auth-client";
-import { clearTokenCache } from "@/lib/clientsidejwt";
+import { signOutAndClearTokenCache } from "@/lib/clientsidejwt";
 import { getCurrentUser } from "@/lib/actions";
 import { loginUrlWithRedirect } from "@/lib/redirect";
 import { useAsyncData } from "@/hooks/useAsyncData";
@@ -57,16 +57,16 @@ function ProfileGate({ children }: { children: ReactNode }) {
     if (!isBlocked) return;
 
     toast.error("Your account has been blocked. Please contact the salon.");
-    clearTokenCache();
-    authClient.signOut().finally(() => router.replace("/login"));
+    void signOutAndClearTokenCache()
+      .catch(() => undefined)
+      .finally(() => router.replace("/login"));
   }, [isBlocked, router]);
 
   useEffect(() => {
     if (!isUnauthorized) return;
 
-    clearTokenCache();
-    authClient
-      .signOut()
+    void signOutAndClearTokenCache()
+      .catch(() => undefined)
       .finally(() => router.replace(loginUrlWithRedirect("/dashboard")));
   }, [isUnauthorized, router]);
 

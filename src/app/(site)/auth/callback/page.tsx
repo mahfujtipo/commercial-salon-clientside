@@ -3,11 +3,13 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { authClient } from "@/lib/auth-client";
 import { getCurrentUser } from "@/lib/actions";
 import { getErrorMessage } from "@/lib/api";
 import { readRedirectFromUrl } from "@/lib/redirect";
-import { clearTokenCache } from "@/lib/clientsidejwt";
+import {
+  clearTokenCache,
+  signOutAndClearTokenCache,
+} from "@/lib/clientsidejwt";
 
 // Runs right after Sign In (email or Google): loads the verified profile from the
 // Express API, blocks blocked users and sends everyone to the right place.
@@ -34,8 +36,7 @@ export default function AuthCallbackPage() {
           toast.error(
             "Your account has been blocked. Please contact the salon.",
           );
-          clearTokenCache();
-          await authClient.signOut();
+          await signOutAndClearTokenCache();
           router.replace("/login");
           return;
         }

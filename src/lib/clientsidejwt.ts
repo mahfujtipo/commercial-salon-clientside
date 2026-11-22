@@ -5,12 +5,60 @@ const CACHE_MS = 30_000;
 
 let cached: { token: string; expires: number } | null = null;
 let inflight: Promise<string | undefined> | null = null;
+let signOutInflight: Promise<void> | null = null;
 let generation = 0;
 
 export const clearTokenCache = () => {
   generation += 1;
   cached = null;
   inflight = null;
+};
+
+const performSignOut = async () => {
+  clearTokenCache();
+
+  let signOutError: Error | undefined;
+
+  try {
+    const { data, error } = await authClient.signOut();
+
+    if (!error && data?.success) {
+      clearTokenCache();
+      return;
+    }
+
+    if (error) signOutError = new Error(error.message || "Logout failed.");
+  } catch (error) {
+    signOutError =
+      error instanceof Error ? error : new Error("Logout failed.");
+  }
+
+  clearTokenCache();
+
+  const { data: session, error: sessionError } = await authClient.getSession({
+    query: { disableCookieCache: true },
+  });
+
+  if (sessionError || session) {
+    throw (
+      signOutError ||
+      new Error(sessionError?.message || "Unable to confirm logout.")
+    );
+  }
+
+  // signOut may have cleared the server session before its response failed.
+  // Notify Better Auth's shared session store after confirming no session exists.
+  authClient.$store.notify("$sessionSignal");
+};
+
+export const signOutAndClearTokenCache = () => {
+  if (signOutInflight) return signOutInflight;
+
+  signOutInflight = performSignOut().finally(() => {
+    signOutInflight = null;
+  });
+
+  return signOutInflight;
 };
 
 export const clientsidejwt = async (signal?: AbortSignal) => {

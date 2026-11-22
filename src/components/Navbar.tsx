@@ -14,7 +14,7 @@ import {
   LayoutDashboard,
 } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
-import { clearTokenCache } from "@/lib/clientsidejwt";
+import { signOutAndClearTokenCache } from "@/lib/clientsidejwt";
 import { toast } from "sonner";
 
 const navLinks = [
@@ -84,13 +84,7 @@ function NavbarContent() {
   const handleLogout = async () => {
     try {
       setIsLoggingOut(true);
-      clearTokenCache();
-      const { data, error } = await authClient.signOut();
-      if (error || !data?.success) {
-        throw new Error(error?.message || "Logout failed.");
-      }
-
-      clearTokenCache();
+      await signOutAndClearTokenCache();
 
       setProfileOpen(false);
       setMenuOpen(false);

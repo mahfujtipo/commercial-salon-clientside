@@ -12,8 +12,7 @@ import {
   UserRound,
 } from "lucide-react";
 import { toast } from "sonner";
-import { authClient } from "@/lib/auth-client";
-import { clearTokenCache } from "@/lib/clientsidejwt";
+import { signOutAndClearTokenCache } from "@/lib/clientsidejwt";
 import { useDashboardUser } from "./DashboardProvider";
 import { getPageTitle } from "./menu";
 
@@ -54,13 +53,7 @@ export default function DashboardHeader({ onToggleSidebar }: HeaderProps) {
     setLoggingOut(true);
 
     try {
-      clearTokenCache();
-      const { data, error } = await authClient.signOut();
-      if (error || !data?.success) {
-        throw new Error(error?.message || "Logout failed.");
-      }
-
-      clearTokenCache();
+      await signOutAndClearTokenCache();
 
       toast.success("Logged out successfully!");
       router.push("/");
