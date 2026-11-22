@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Search, SearchX } from "lucide-react";
 import { getCategories, getServices } from "@/lib/actions";
 import { useAsyncData } from "@/hooks/useAsyncData";
@@ -15,12 +15,26 @@ import type { PriceSort } from "@/types";
 import ServiceCard, { ServiceCardSkeleton } from "./ServiceCard";
 
 export default function ServicesBrowser() {
+  const pathname = usePathname();
+  const router = useRouter();
   const searchParams = useSearchParams();
+  const category = searchParams.get("category") ?? "";
 
   const [searchInput, setSearchInput] = useState("");
-  const [category, setCategory] = useState(searchParams.get("category") ?? "");
   const [sort, setSort] = useState<PriceSort>("newest");
-  const [page, setPage] = useState(1);
+  const [pageState, setPageState] = useState({ category, page: 1 });
+  const page = pageState.category === category ? pageState.page : 1;
+  const setPage = (nextPage: number) => setPageState({ category, page: nextPage });
+
+  const selectCategory = (nextCategory: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (nextCategory) params.set("category", nextCategory);
+    else params.delete("category");
+
+    const query = params.toString();
+    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
+    setPage(1);
+  };
 
   const search = useDebouncedValue(searchInput.trim());
 
@@ -33,7 +47,7 @@ export default function ServicesBrowser() {
 
   const resetFilters = () => {
     setSearchInput("");
-    setCategory("");
+    selectCategory("");
     setSort("newest");
     setPage(1);
   };
@@ -77,7 +91,7 @@ export default function ServicesBrowser() {
             <button
               key={item.category || "all"}
               type="button"
-              onClick={() => { setCategory(item.category); setPage(1); }}
+              onClick={() => selectCategory(item.category)}
               className={`rounded-full px-4 py-2 text-xs font-semibold transition-colors ${
                 active
                   ? "bg-[#A66C62] text-white"
