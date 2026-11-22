@@ -45,8 +45,8 @@ Better Auth stores users, sessions, and provider accounts in the SalonBook datab
 
 ## Links
 
-- Live website: Not configured in this repository.
-- Client repository: No client Git remote is configured.
+- Live website: https://commercial-salon-clientside.vercel.app/
+- Client repository: https://github.com/mahfujtipo/commercial-salon-clientside
 - Server repository: https://github.com/mahfujtipo/commercial-salon-server
 
 ## Project structure

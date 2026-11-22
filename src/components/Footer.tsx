@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState, useSyncExternalStore, type FormEvent } from "react";
-import { Clock, Mail, MapPin, Phone } from "lucide-react";
+import { Clock, MapPin, Phone } from "lucide-react";
 
 export default function Footer() {
   const [email, setEmail] = useState("");
@@ -57,22 +57,18 @@ export default function Footer() {
   const socials = [
     {
       name: "Instagram",
-      href: "https://www.instagram.com/",
       path: "M7.8 2h8.4A5.8 5.8 0 0 1 22 7.8v8.4a5.8 5.8 0 0 1-5.8 5.8H7.8A5.8 5.8 0 0 1 2 16.2V7.8A5.8 5.8 0 0 1 7.8 2Zm0 2A3.8 3.8 0 0 0 4 7.8v8.4A3.8 3.8 0 0 0 7.8 20h8.4a3.8 3.8 0 0 0 3.8-3.8V7.8A3.8 3.8 0 0 0 16.2 4H7.8ZM12 7a5 5 0 1 1 0 10 5 5 0 0 1 0-10Zm0 2a3 3 0 1 0 0 6 3 3 0 0 0 0-6Z",
     },
     {
       name: "Facebook",
-      href: "https://www.facebook.com/",
       path: "M13.5 22v-8.8h3l.45-3.45H13.5V7.55c0-1 .28-1.68 1.72-1.68h1.83V2.78A24 24 0 0 0 14.38 2c-2.65 0-4.47 1.62-4.47 4.6v2.56h-3v3.45h3V22h3.59Z",
     },
     {
       name: "YouTube",
-      href: "https://www.youtube.com/",
       path: "M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.6 12 3.6 12 3.6s-7.5 0-9.4.5A3 3 0 0 0 .5 6.2 31 31 0 0 0 0 12a31 31 0 0 0 .5 5.8 3 3 0 0 0 2.1 2.1c1.9.5 9.4.5 9.4.5s7.5 0 9.4-.5a3 3 0 0 0 2.1-2.1A31 31 0 0 0 24 12a31 31 0 0 0-.5-5.8ZM9.6 15.6V8.4L15.8 12l-6.2 3.6Z",
     },
     {
       name: "LinkedIn",
-      href: "https://www.linkedin.com/",
       path: "M20.45 2H3.55A1.55 1.55 0 0 0 2 3.55v16.9A1.55 1.55 0 0 0 3.55 22h16.9A1.55 1.55 0 0 0 22 20.45V3.55A1.55 1.55 0 0 0 20.45 2ZM8 19H5V9h3v10ZM6.5 7.7a1.75 1.75 0 1 1 0-3.5 1.75 1.75 0 0 1 0 3.5ZM19 19h-3v-5.1c0-3.1-4-2.9-4 0V19H9V9h3v1.4c1.4-2.6 7-2.8 7 2.5V19Z",
     },
   ];
@@ -225,17 +221,7 @@ export default function Footer() {
                 Contact Us
               </h3>
               <ul className="mt-3 space-y-2 text-sm text-[#B7A69D]">
-                <li>
-                  <a href="tel:+8801700000000" className="hover:text-[#E8B6A7]">
-                    +880 1700-000000
-                  </a>
-                </li>
-                <li className="flex items-center gap-2">
-                  <Mail size={14} />
-                  <a href="mailto:hello@salonbook.com" className="hover:text-[#E8B6A7]">
-                    hello@salonbook.com
-                  </a>
-                </li>
+                <li>Contact details are not available.</li>
               </ul>
             </div>
           </div>
@@ -249,11 +235,7 @@ export default function Footer() {
                 Salon Address
               </h3>
               <address className="mt-3 text-sm not-italic leading-6 text-[#B7A69D]">
-                SalonBook Studio
-                <br />
-                123 Beauty Avenue, Downtown
-                <br />
-                Bangladesh
+                Address details are not available.
               </address>
             </div>
           </div>
@@ -282,22 +264,20 @@ export default function Footer() {
 
           <div className="flex items-center gap-6">
             {socials.map((social) => (
-              <a
+              <span
                 key={social.name}
-                href={social.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label={social.name}
+                aria-label={`${social.name} profile not provided`}
                 className="text-[#A18F85] transition-colors hover:text-[#E8B6A7]"
               >
                 <svg
                   viewBox="0 0 24 24"
                   className="h-5 w-5"
                   fill="currentColor"
+                  aria-hidden="true"
                 >
                   <path d={social.path} />
                 </svg>
-              </a>
+              </span>
             ))}
           </div>
         </div>

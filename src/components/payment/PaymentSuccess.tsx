@@ -10,7 +10,7 @@ import { loginUrlWithRedirect } from "@/lib/redirect";
 import Button from "@/components/ui/Button";
 import { Spinner } from "@/components/ui/LoadingState";
 
-type State = "verifying" | "paid" | "failed" | "processing" | "invalid";
+type State = "verifying" | "paid" | "failed" | "expired" | "processing" | "invalid" | "error";
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -23,25 +23,33 @@ function Verifier({ sessionId }: { sessionId: string }) {
     let cancelled = false;
 
     const verify = async () => {
+      if (!sessionId) {
+        setState("invalid");
+        return;
+      }
+
+      let requestFailed = false;
       for (let attempt = 0; attempt < 10; attempt++) {
         try {
           const result = await getPaymentStatus(sessionId);
 
           if (cancelled) return;
 
-          if (result.status === "paid" || result.status === "failed") {
+          requestFailed = false;
+
+          if (result.status === "paid" || result.status === "failed" || result.status === "expired") {
             setState(result.status);
             return;
           }
         } catch {
-          // keep trying; the webhook may not have arrived yet
+          requestFailed = true;
         }
 
         await sleep(2000);
         if (cancelled) return;
       }
 
-      setState("processing");
+      setState(requestFailed ? "error" : "processing");
     };
 
     verify();
@@ -74,6 +82,11 @@ function Verifier({ sessionId }: { sessionId: string }) {
       title: "Payment failed",
       text: "Your payment could not be completed. You were not charged. Please try again from My Appointments.",
     },
+    expired: {
+      icon: <XCircle size={56} className="text-amber-500" />,
+      title: "Checkout session expired",
+      text: "This payment session expired before it was completed. You can start a new payment from My Appointments.",
+    },
     processing: {
       icon: <Clock size={56} className="text-amber-500" />,
       title: "Payment is still processing",
@@ -83,6 +96,11 @@ function Verifier({ sessionId }: { sessionId: string }) {
       icon: <XCircle size={56} className="text-red-600" />,
       title: "Invalid payment link",
       text: "We could not find a payment session. Open My Appointments to check your payment status.",
+    },
+    error: {
+      icon: <XCircle size={56} className="text-red-600" />,
+      title: "Unable to verify payment",
+      text: "We could not reach the payment status service. Check My Appointments for the latest status.",
     },
   }[state];
 

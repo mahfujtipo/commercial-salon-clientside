@@ -7,6 +7,14 @@ import { NextResponse } from "next/server";
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
 
+function detectImageType(buffer: Buffer): string | null {
+  if (buffer.length >= 3 && buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff) return "image/jpeg";
+  if (buffer.length >= 8 && buffer.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))) return "image/png";
+  if (buffer.length >= 6 && ["GIF87a", "GIF89a"].includes(buffer.toString("ascii", 0, 6))) return "image/gif";
+  if (buffer.length >= 12 && buffer.toString("ascii", 0, 4) === "RIFF" && buffer.toString("ascii", 8, 12) === "WEBP") return "image/webp";
+  return null;
+}
+
 const fail = (message: string, status: number) =>
   NextResponse.json({ success: false, message }, { status });
 
@@ -39,12 +47,14 @@ export async function POST(request: Request) {
     return fail("Image must be 5 MB or smaller.", 400);
   }
 
+  const imageBuffer = Buffer.from(await file.arrayBuffer());
+  if (detectImageType(imageBuffer) !== file.type) {
+    return fail("File contents must match a valid JPG, PNG, WEBP or GIF image.", 400);
+  }
+
   try {
     const body = new FormData();
-    body.append(
-      "image",
-      Buffer.from(await file.arrayBuffer()).toString("base64"),
-    );
+    body.append("image", imageBuffer.toString("base64"));
 
     const response = await fetch(
       `https://api.imgbb.com/1/upload?key=${apiKey}`,

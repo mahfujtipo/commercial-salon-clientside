@@ -152,6 +152,6 @@ export interface ServiceQuery {
 }
 
 export interface PaymentStatusResult {
-  status: "paid" | "failed" | "processing";
+  status: "paid" | "failed" | "expired" | "processing";
   appointmentId?: string;
 }
