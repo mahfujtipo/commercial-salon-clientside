@@ -43,6 +43,7 @@ function NavbarContent() {
 
   const user = session?.user;
   const userRole = (user as { role?: string } | undefined)?.role ?? "customer";
+  const showLogoutLoading = isLoggingOut && Boolean(user);
 
   // One shared dashboard for both roles (content changes by role)
   const dashboardLink = "/dashboard";
@@ -249,11 +250,11 @@ function NavbarContent() {
                     <button
                       type="button"
                       onClick={handleLogout}
-                      disabled={isLoggingOut}
+                      disabled={showLogoutLoading}
                       className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-medium text-red-600 transition-colors hover:bg-red-50 disabled:opacity-50"
                     >
                       <LogOut size={18} />
-                      {isLoggingOut ? "Logging out..." : "Logout"}
+                      {showLogoutLoading ? "Logging out..." : "Logout"}
                     </button>
                   </div>
                 </div>
@@ -366,11 +367,11 @@ function NavbarContent() {
                   <button
                     type="button"
                     onClick={handleLogout}
-                    disabled={isLoggingOut}
+                    disabled={showLogoutLoading}
                     className="flex items-center justify-center gap-2 rounded-full border border-[#D9C5BB] py-3 text-sm font-semibold text-red-600 disabled:opacity-50"
                   >
                     <LogOut size={16} />
-                    {isLoggingOut ? "Logging out..." : "Logout"}
+                    {showLogoutLoading ? "Logging out..." : "Logout"}
                   </button>
                 </>
               ) : (
