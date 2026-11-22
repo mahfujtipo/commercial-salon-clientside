@@ -13,7 +13,7 @@ import {
   LogOut,
   LayoutDashboard,
 } from "lucide-react";
-import { authClient, refreshAuthSession } from "@/lib/auth-client";
+import { authClient } from "@/lib/auth-client";
 import { clearTokenCache } from "@/lib/clientsidejwt";
 import { toast } from "sonner";
 
@@ -85,14 +85,12 @@ function NavbarContent() {
     try {
       setIsLoggingOut(true);
       clearTokenCache();
-      const { error } = await authClient.signOut();
-      if (error) throw new Error(error.message || "Logout failed.");
+      const { data, error } = await authClient.signOut();
+      if (error || !data?.success) {
+        throw new Error(error?.message || "Logout failed.");
+      }
 
       clearTokenCache();
-      const refreshedSession = await refreshAuthSession();
-      if (refreshedSession.error || refreshedSession.data) {
-        throw new Error("Unable to confirm the signed-out session.");
-      }
 
       setProfileOpen(false);
       setMenuOpen(false);

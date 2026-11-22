@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff, ArrowRight, Scissors, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
-import { authClient, refreshAuthSession } from "@/lib/auth-client";
+import { authClient } from "@/lib/auth-client";
 import { callbackUrlWithRedirect, readRedirectFromUrl } from "@/lib/redirect";
 
 function GoogleIcon() {
@@ -81,25 +81,14 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      const { error } = await authClient.signIn.email({
+      const { data, error } = await authClient.signIn.email({
         email: email.trim(),
         password,
         rememberMe,
       });
 
-      if (error) {
-        toast.error(error.message || "Unable to sign in.");
-        return;
-      }
-
-      const { data: currentSession, error: sessionError } =
-        await refreshAuthSession();
-
-      if (sessionError || !currentSession?.user) {
-        toast.error(
-          sessionError?.message ||
-            "Sign in succeeded, but your session could not be confirmed.",
-        );
+      if (error || !data?.user) {
+        toast.error(error?.message || "Unable to sign in.");
         return;
       }
 
